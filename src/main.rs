@@ -1,17 +1,17 @@
 use std::{
     cmp::{Eq, PartialEq},
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     hash::Hash,
 };
 
 fn main() {
     let graph = GraphBuilder::<i32>::new()
-        .insert_node(Node(1))
-        .insert_node(Node(2))
+        .insert_node(1)
+        .insert_node(2)
         .insert_edge(1, 2)
-        .insert_node(Node(3))
+        .insert_node(3)
         .insert_edge(1, 3)
-        .insert_node(Node(4))
+        .insert_node(4)
         .insert_edge(4, 3)
         .build();
 
@@ -28,68 +28,57 @@ struct Edge<T> {
 }
 
 #[derive(Debug)]
-struct GraphBuilder<T: PartialEq + Eq + Hash + Copy> {
-    nodes: HashSet<Node<T>>,
-    edges: HashSet<Edge<T>>,
+struct GraphBuilder<T: PartialEq + Eq + Hash + Clone> {
+    vertices: HashMap<T, HashSet<Node<T>>>,
 }
 
 #[derive(Debug)]
-struct Graph<T: PartialEq + Eq + Hash + Copy> {
-    nodes: HashSet<Node<T>>,
-    edges: HashSet<Edge<T>>,
+struct Graph<T: PartialEq + Eq + Hash + Clone> {
+    vertices: HashMap<T, HashSet<Node<T>>>,
 }
 
-impl<T: PartialEq + Eq + Hash + Copy> Default for GraphBuilder<T> {
+impl<T: PartialEq + Eq + Hash + Clone> Default for GraphBuilder<T> {
     fn default() -> Self {
         GraphBuilder {
-            nodes: HashSet::new(),
-            edges: HashSet::new(),
+            vertices: HashMap::new(),
         }
     }
 }
 
-impl<T: PartialEq + Eq + Hash + Copy> GraphBuilder<T> {
+impl<T: PartialEq + Eq + Hash + Clone> GraphBuilder<T> {
     fn new() -> Self {
         GraphBuilder::default()
     }
 
-    fn insert_node(mut self, node: Node<T>) -> GraphBuilder<T> {
-        self.nodes.insert(node);
+    fn insert_node(mut self, node: T) -> GraphBuilder<T> {
+        self.vertices.insert(node, HashSet::new());
         self
     }
 
-    fn find_node(&self, id: T) -> Option<&Node<T>> {
-        let node = self.nodes.iter().find(|n| n.0 == id);
-        node
-    }
-
     fn insert_edge(mut self, from: T, to: T) -> GraphBuilder<T> {
-        let from_node = self.find_node(from);
-        let to_node = self.find_node(to);
+        let has_from = self.vertices.contains_key(&from);
+        let has_to = self.vertices.contains_key(&to);
 
-        if from_node.is_none() || to_node.is_none() {
+        if !has_from || !has_to {
             return self;
         }
 
-        let from_node = from_node.unwrap();
-        let to_node = to_node.unwrap();
+        if let Some(from_vert) = self.vertices.get_mut(&from) {
+            from_vert.insert(Node(to.clone()));
+        }
 
-        let edge = Edge {
-            from: Node(from_node.0),
-            to: Node(to_node.0),
-        };
-
-        self.edges.insert(edge);
+        if let Some(to_vert) = self.vertices.get_mut(&to) {
+            to_vert.insert(Node(from.clone()));
+        }
 
         self
     }
 
     fn build(self) -> Graph<T> {
         Graph {
-            nodes: self.nodes,
-            edges: self.edges,
+            vertices: self.vertices,
         }
     }
 }
 
-impl<T: PartialEq + Eq + Hash + Copy> Graph<T> {}
+impl<T: PartialEq + Eq + Hash + Clone> Graph<T> {}
