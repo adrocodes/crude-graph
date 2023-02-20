@@ -16,6 +16,27 @@ fn main() {
         .build();
 
     dbg!(&graph);
+
+    let graph = GraphBuilder::<String>::new()
+        .from_vertices(vec![
+            "A".into(),
+            "B".into(),
+            "C".into(),
+            "D".into(),
+            "E".into(),
+            "F".into(),
+        ])
+        .insert_edge("A".into(), "B".into())
+        .insert_edge("A".into(), "D".into())
+        .insert_edge("A".into(), "E".into())
+        .insert_edge("B".into(), "C".into())
+        .insert_edge("D".into(), "E".into())
+        .insert_edge("E".into(), "F".into())
+        .insert_edge("E".into(), "C".into())
+        .insert_edge("C".into(), "F".into())
+        .build();
+
+    dbg!(&graph);
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
@@ -69,6 +90,14 @@ impl<T: PartialEq + Eq + Hash + Clone> GraphBuilder<T> {
 
         if let Some(to_vert) = self.vertices.get_mut(&to) {
             to_vert.insert(Node(from.clone()));
+        }
+
+        self
+    }
+
+    fn from_vertices(mut self, nodes: Vec<T>) -> GraphBuilder<T> {
+        for node in nodes {
+            self.vertices.insert(node, HashSet::new());
         }
 
         self
