@@ -36,6 +36,10 @@ fn main() {
     .build();
 
     dbg!(&graph);
+
+    let graph = GraphBuilder::<i32>::from_edges(vec![(1, 2), (1, 3), (4, 3)]).build();
+
+    dbg!(&graph);
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
@@ -64,12 +68,14 @@ impl<T: PartialEq + Eq + Hash + Clone> GraphBuilder<T> {
         GraphBuilder::default()
     }
 
-    fn _insert_node(builder: &mut GraphBuilder<T>, node: T) {
-        builder.vertices.insert(node, HashSet::new());
+    fn _insert_node(builder: &mut GraphBuilder<T>, node: &T) {
+        if !builder.vertices.contains_key(node) {
+            builder.vertices.insert(node.clone(), HashSet::new());
+        }
     }
 
     pub fn insert_node(mut self, node: T) -> GraphBuilder<T> {
-        GraphBuilder::<T>::_insert_node(&mut self, node);
+        GraphBuilder::<T>::_insert_node(&mut self, &node);
         self
     }
 
@@ -100,7 +106,19 @@ impl<T: PartialEq + Eq + Hash + Clone> GraphBuilder<T> {
         let mut graph = GraphBuilder::<T>::new();
 
         for node in nodes {
-            GraphBuilder::<T>::_insert_node(&mut graph, node);
+            GraphBuilder::<T>::_insert_node(&mut graph, &node);
+        }
+
+        graph
+    }
+
+    pub fn from_edges(edges: Vec<(T, T)>) -> GraphBuilder<T> {
+        let mut graph = GraphBuilder::<T>::new();
+
+        for (from, to) in edges {
+            GraphBuilder::<T>::_insert_node(&mut graph, &from);
+            GraphBuilder::<T>::_insert_node(&mut graph, &to);
+            GraphBuilder::<T>::_insert_edge(&mut graph, &from, &to);
         }
 
         graph
