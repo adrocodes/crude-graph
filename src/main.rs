@@ -15,7 +15,7 @@ fn main() {
         .insert_edge(4, 3)
         .build();
 
-    dbg!(&graph);
+    // dbg!(&graph);
 
     let graph = GraphBuilder::<String>::from_vertices(vec![
         "A".into(),
@@ -35,11 +35,15 @@ fn main() {
     .insert_edge("C".into(), "F".into())
     .build();
 
-    dbg!(&graph);
+    // dbg!(&graph);
 
     let graph = GraphBuilder::<i32>::from_edges(vec![(1, 2), (1, 3), (4, 3)]).build();
 
-    dbg!(&graph);
+    // dbg!(&graph);
+
+    let path = graph.find_path(1, 4);
+
+    dbg!(&path);
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
@@ -131,4 +135,37 @@ impl<T: PartialEq + Eq + Hash + Clone> GraphBuilder<T> {
     }
 }
 
-impl<T: PartialEq + Eq + Hash + Clone> Graph<T> {}
+impl<T: PartialEq + Eq + Hash + Clone> Graph<T> {
+    fn _traverse(
+        graph: &Graph<T>,
+        path: &mut Vec<Node<T>>,
+        node: Node<T>,
+        current: &HashSet<Node<T>>,
+    ) -> Vec<Node<T>> {
+        path.push(node);
+
+        path.to_vec()
+    }
+
+    pub fn find_path(&self, start: T, end: T) -> Option<Vec<Node<T>>> {
+        let mut path: Vec<Node<T>> = vec![];
+        let start_node = Node(start.clone());
+        let start = self.vertices.get(&start);
+
+        if start.is_none() {
+            return None;
+        }
+
+        let start = start.unwrap();
+
+        path = Graph::<T>::_traverse(&self, &mut path, start_node, start);
+
+        if path.last().is_some() {
+            if path.last().unwrap().0 != end {
+                return None;
+            }
+        }
+
+        Some(path)
+    }
+}
