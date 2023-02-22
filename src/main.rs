@@ -36,13 +36,15 @@ fn main() {
     .insert_edge("C".into(), "F".into())
     .build();
 
-    // dbg!(&graph);
-
-    let graph = GraphBuilder::<i32>::from_edges(vec![(1, 2), (1, 3), (4, 3)]).build();
+    let path = graph.find_path("A".into(), "F".into());
 
     // dbg!(&graph);
 
-    let path = graph.find_path(1, 4);
+    // let graph = GraphBuilder::<i32>::from_edges(vec![(1, 2), (1, 3), (4, 3)]).build();
+
+    // dbg!(&graph);
+
+    // let path = graph.find_path(1, 4);
 
     dbg!(&path);
 }
@@ -143,12 +145,15 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
         node: &T,
         current: &HashSet<Node<T>>,
         goal: &T,
+        visited: &mut HashSet<T>,
     ) -> Vec<T> {
+        visited.insert(node.clone());
+
         if *node == *goal {
             path.push(node.clone());
         } else {
             for n in current.iter() {
-                if path.contains(&n.0) {
+                if visited.contains(&n.0) {
                     continue;
                 }
 
@@ -156,7 +161,8 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
                     path.push(n.0.clone());
                 } else {
                     let current = graph.vertices.get(&n.0).unwrap();
-                    let mut new_path = Graph::<T>::_traverse(&graph, path, &n.0, &current, goal);
+                    let mut new_path =
+                        Graph::<T>::_traverse(&graph, path, &n.0, &current, goal, visited);
 
                     let last = new_path.last();
 
@@ -190,8 +196,10 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
         }
 
         path.push(start.clone());
+        let mut visited = HashSet::<T>::new();
+        visited.insert(start.clone());
 
-        path = Graph::<T>::_traverse(&self, &mut path, &start, start_node, &end);
+        path = Graph::<T>::_traverse(&self, &mut path, &start, start_node, &end, &mut visited);
 
         if path.last().is_some() {
             let last = path.last().unwrap();
