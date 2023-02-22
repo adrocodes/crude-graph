@@ -1,6 +1,7 @@
 use std::{
     cmp::{Eq, PartialEq},
     collections::{HashMap, HashSet},
+    fmt::Debug,
     hash::Hash,
 };
 
@@ -50,16 +51,16 @@ fn main() {
 struct Node<T>(T);
 
 #[derive(Debug)]
-struct GraphBuilder<T: PartialEq + Eq + Hash + Clone> {
+struct GraphBuilder<T: PartialEq + Eq + Hash + Clone + Debug> {
     vertices: HashMap<T, HashSet<Node<T>>>,
 }
 
 #[derive(Debug)]
-struct Graph<T: PartialEq + Eq + Hash + Clone> {
+struct Graph<T: PartialEq + Eq + Hash + Clone + Debug> {
     vertices: HashMap<T, HashSet<Node<T>>>,
 }
 
-impl<T: PartialEq + Eq + Hash + Clone> Default for GraphBuilder<T> {
+impl<T: PartialEq + Eq + Hash + Clone + Debug> Default for GraphBuilder<T> {
     fn default() -> Self {
         GraphBuilder {
             vertices: HashMap::new(),
@@ -67,7 +68,7 @@ impl<T: PartialEq + Eq + Hash + Clone> Default for GraphBuilder<T> {
     }
 }
 
-impl<T: PartialEq + Eq + Hash + Clone> GraphBuilder<T> {
+impl<T: PartialEq + Eq + Hash + Clone + Debug> GraphBuilder<T> {
     fn new() -> Self {
         GraphBuilder::default()
     }
@@ -135,33 +136,66 @@ impl<T: PartialEq + Eq + Hash + Clone> GraphBuilder<T> {
     }
 }
 
-impl<T: PartialEq + Eq + Hash + Clone> Graph<T> {
+impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
     fn _traverse(
         graph: &Graph<T>,
-        path: &mut Vec<Node<T>>,
-        node: Node<T>,
+        path: &mut Vec<T>,
+        node: &T,
         current: &HashSet<Node<T>>,
-    ) -> Vec<Node<T>> {
-        path.push(node);
+        goal: &T,
+    ) -> Vec<T> {
+        if *node == *goal {
+            path.push(node.clone());
+        } else {
+            for n in current.iter() {
+                if path.contains(&n.0) {
+                    continue;
+                }
+
+                if n.0 == *goal {
+                    path.push(n.0.clone());
+                } else {
+                    let current = graph.vertices.get(&n.0).unwrap();
+                    let mut new_path = Graph::<T>::_traverse(&graph, path, &n.0, &current, goal);
+
+                    let last = new_path.last();
+
+                    if let Some(last) = last {
+                        if *last == *goal {
+                            let mut last_vec = new_path.split_off(new_path.len() - 1);
+                            new_path.push(n.0.clone());
+                            new_path.append(&mut last_vec);
+                            *path = new_path;
+                        }
+                    }
+                }
+            }
+        }
 
         path.to_vec()
     }
 
-    pub fn find_path(&self, start: T, end: T) -> Option<Vec<Node<T>>> {
-        let mut path: Vec<Node<T>> = vec![];
-        let start_node = Node(start.clone());
-        let start = self.vertices.get(&start);
+    pub fn find_path(&self, start: T, end: T) -> Option<Vec<T>> {
+        let mut path: Vec<T> = vec![];
+        let start_node = self.vertices.get(&start);
 
-        if start.is_none() {
+        if start_node.is_none() {
             return None;
         }
 
-        let start = start.unwrap();
+        let start_node = start_node.unwrap();
 
-        path = Graph::<T>::_traverse(&self, &mut path, start_node, start);
+        if start == end {
+            return Some(vec![start]);
+        }
+
+        path.push(start.clone());
+
+        path = Graph::<T>::_traverse(&self, &mut path, &start, start_node, &end);
 
         if path.last().is_some() {
-            if path.last().unwrap().0 != end {
+            let last = path.last().unwrap();
+            if *last != end {
                 return None;
             }
         }
