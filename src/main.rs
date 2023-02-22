@@ -146,14 +146,19 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
         current: &HashSet<Node<T>>,
         goal: &T,
         visited: &mut HashSet<T>,
+        found: &mut bool,
     ) -> Vec<T> {
         visited.insert(node.clone());
+
+        if *found {
+            return path.to_vec();
+        }
 
         if *node == *goal {
             path.push(node.clone());
         } else {
             for n in current.iter() {
-                if visited.contains(&n.0) {
+                if visited.contains(&n.0) || *found {
                     continue;
                 }
 
@@ -162,16 +167,17 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
                 } else {
                     let current = graph.vertices.get(&n.0).unwrap();
                     let mut new_path =
-                        Graph::<T>::_traverse(&graph, path, &n.0, &current, goal, visited);
+                        Graph::<T>::_traverse(&graph, path, &n.0, &current, goal, visited, found);
 
                     let last = new_path.last();
 
                     if let Some(last) = last {
-                        if *last == *goal {
+                        if *last == *goal && *last != n.0 {
                             let mut last_vec = new_path.split_off(new_path.len() - 1);
                             new_path.push(n.0.clone());
                             new_path.append(&mut last_vec);
                             *path = new_path;
+                            *found = true;
                         }
                     }
                 }
@@ -198,8 +204,17 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
         path.push(start.clone());
         let mut visited = HashSet::<T>::new();
         visited.insert(start.clone());
+        let mut found = false;
 
-        path = Graph::<T>::_traverse(&self, &mut path, &start, start_node, &end, &mut visited);
+        path = Graph::<T>::_traverse(
+            &self,
+            &mut path,
+            &start,
+            start_node,
+            &end,
+            &mut visited,
+            &mut found,
+        );
 
         if path.last().is_some() {
             let last = path.last().unwrap();
