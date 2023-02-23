@@ -36,7 +36,7 @@ fn main() {
     .insert_edge("C".into(), "F".into())
     .build();
 
-    let path = graph.find_path("A".into(), "F".into());
+    // let path = graph.find_path("A".into(), "F".into());
 
     // dbg!(&graph);
 
@@ -46,20 +46,17 @@ fn main() {
 
     // let path = graph.find_path(1, 4);
 
-    dbg!(&path);
+    // dbg!(&path);
 }
-
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
-struct Node<T>(T);
 
 #[derive(Debug)]
 struct GraphBuilder<T: PartialEq + Eq + Hash + Clone + Debug> {
-    vertices: HashMap<T, HashSet<Node<T>>>,
+    vertices: HashMap<T, HashSet<T>>,
 }
 
 #[derive(Debug)]
 struct Graph<T: PartialEq + Eq + Hash + Clone + Debug> {
-    vertices: HashMap<T, HashSet<Node<T>>>,
+    vertices: HashMap<T, HashSet<T>>,
 }
 
 impl<T: PartialEq + Eq + Hash + Clone + Debug> Default for GraphBuilder<T> {
@@ -95,11 +92,11 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> GraphBuilder<T> {
         }
 
         if let Some(from_vert) = builder.vertices.get_mut(&from) {
-            from_vert.insert(Node(to.clone()));
+            from_vert.insert(to.clone());
         }
 
         if let Some(to_vert) = builder.vertices.get_mut(&to) {
-            to_vert.insert(Node(from.clone()));
+            to_vert.insert(from.clone());
         }
     }
 
@@ -143,7 +140,7 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
         graph: &Graph<T>,
         path: &mut Vec<T>,
         node: &T,
-        current: &HashSet<Node<T>>,
+        current: &HashSet<T>,
         goal: &T,
         visited: &mut HashSet<T>,
         found: &mut bool,
@@ -157,24 +154,27 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
         if *node == *goal {
             path.push(node.clone());
         } else {
+            // Need to add a check in hashset if it includes the last node
+            // if it does, just add it to the list and skip the loop
+
             for n in current.iter() {
-                if visited.contains(&n.0) || *found {
+                if visited.contains(&n) || *found {
                     continue;
                 }
 
-                if n.0 == *goal {
-                    path.push(n.0.clone());
+                if *n == *goal {
+                    path.push(n.clone());
                 } else {
-                    let current = graph.vertices.get(&n.0).unwrap();
+                    let current = graph.vertices.get(&n).unwrap();
                     let mut new_path =
-                        Graph::<T>::_traverse(&graph, path, &n.0, &current, goal, visited, found);
+                        Graph::<T>::_traverse(&graph, path, &n, &current, goal, visited, found);
 
                     let last = new_path.last();
 
                     if let Some(last) = last {
-                        if *last == *goal && *last != n.0 {
+                        if *last == *goal && *last != *n {
                             let mut last_vec = new_path.split_off(new_path.len() - 1);
-                            new_path.push(n.0.clone());
+                            new_path.push(n.clone());
                             new_path.append(&mut last_vec);
                             *path = new_path;
                             *found = true;
