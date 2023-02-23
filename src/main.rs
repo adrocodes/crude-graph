@@ -6,6 +6,7 @@ use std::{
 };
 
 fn main() {
+    // Manual Graph building
     let graph = GraphBuilder::<i32>::new()
         .insert_node(1)
         .insert_node(2)
@@ -16,9 +17,13 @@ fn main() {
         .insert_edge(4, 3)
         .build();
 
-    // dbg!(&graph);
+    dbg!(&graph);
 
-    let graph = GraphBuilder::<String>::from_vertices(vec![
+    let path = graph.find_path(1, 4);
+    dbg!(&path);
+
+    // From Nodes
+    let graph = GraphBuilder::<String>::from_nodes(vec![
         "A".into(),
         "B".into(),
         "C".into(),
@@ -36,16 +41,16 @@ fn main() {
     .insert_edge("C".into(), "F".into())
     .build();
 
+    dbg!(&graph);
+
     let path = graph.find_path("A".into(), "F".into());
+    dbg!(&path);
 
-    // dbg!(&graph);
+    // From Edges
+    let graph = GraphBuilder::<i32>::from_edges(vec![(1, 2), (1, 3), (4, 3)]).build();
+    dbg!(&graph);
 
-    // let graph = GraphBuilder::<i32>::from_edges(vec![(1, 2), (1, 3), (4, 3)]).build();
-
-    // dbg!(&graph);
-
-    // let path = graph.find_path(1, 4);
-
+    let path = graph.find_path(1, 3);
     dbg!(&path);
 }
 
@@ -106,7 +111,7 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> GraphBuilder<T> {
         self
     }
 
-    pub fn from_vertices(nodes: Vec<T>) -> GraphBuilder<T> {
+    pub fn from_nodes(nodes: Vec<T>) -> GraphBuilder<T> {
         let mut graph = GraphBuilder::<T>::new();
 
         for node in nodes {
@@ -153,8 +158,10 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
 
         if *node == *goal {
             path.push(node.clone());
+            *found = true;
         } else if current.contains(&goal) {
             path.push(goal.clone());
+            *found = true;
         } else {
             for n in current.iter() {
                 if visited.contains(&n) || *found {
