@@ -36,7 +36,7 @@ fn main() {
     .insert_edge("C".into(), "F".into())
     .build();
 
-    // let path = graph.find_path("A".into(), "F".into());
+    let path = graph.find_path("A".into(), "F".into());
 
     // dbg!(&graph);
 
@@ -46,7 +46,7 @@ fn main() {
 
     // let path = graph.find_path(1, 4);
 
-    // dbg!(&path);
+    dbg!(&path);
 }
 
 #[derive(Debug)]
@@ -153,10 +153,9 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
 
         if *node == *goal {
             path.push(node.clone());
+        } else if current.contains(&goal) {
+            path.push(goal.clone());
         } else {
-            // Need to add a check in hashset if it includes the last node
-            // if it does, just add it to the list and skip the loop
-
             for n in current.iter() {
                 if visited.contains(&n) || *found {
                     continue;
@@ -173,11 +172,12 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
 
                     if let Some(last) = last {
                         if *last == *goal && *last != *n {
-                            let mut last_vec = new_path.split_off(new_path.len() - 1);
+                            let mut last_vec = new_path.split_off(1);
                             new_path.push(n.clone());
                             new_path.append(&mut last_vec);
                             *path = new_path;
                             *found = true;
+                            break;
                         }
                     }
                 }
@@ -216,11 +216,8 @@ impl<T: PartialEq + Eq + Hash + Clone + Debug> Graph<T> {
             &mut found,
         );
 
-        if path.last().is_some() {
-            let last = path.last().unwrap();
-            if *last != end {
-                return None;
-            }
+        if !found {
+            return None;
         }
 
         Some(path)
